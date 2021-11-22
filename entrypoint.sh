@@ -2,26 +2,26 @@
 set -eu
 set -o pipefail
 
-init_wrapper()
+select_init()
 {
-  if egrep "^/sbin/docker-init" /proc/1/cmdline >/dev/null 2>&1; then
-    # run with --init
-    exec "$@"
+  if [ $$ -eq 1 ]; then
+    if egrep "^/sbin/docker-init" /proc/1/cmdline >/dev/null 2>&1; then
+      echo ""
+    else
+      echo "tini"
+    fi
   else
-    # run without --init
-    exec /usr/bin/tini -- "$@"
+    echo ""
   fi
 }
 
-
-[ -e .env ] && . .env
 
 if [ $(id -u) -eq $(id -u root) ]; then
   # root
   SET_GID=${SET_GID:-$(stat -c "%g" .)}
   SET_UID=${SET_UID:-$(stat -c "%u" .)}
   if [ $(id -u root) -eq $SET_UID -a $(id -g root) -eq $SET_GID ]; then
-    init_wrapper "$@"
+    eval exec $(select_init) -- "$@"
   else
     # Change to the owner of the current directory.
     if [[ -n ${HOME:+$HOME} ]]; then
@@ -34,10 +34,10 @@ if [ $(id -u) -eq $(id -u root) ]; then
         fi
       fi
     fi
-    init_wrapper setpriv --reuid=$SET_UID --regid=$SET_GID --groups $SET_GID "$@"
+    eval exec $(select_init) -- setpriv --reuid=$SET_UID --regid=$SET_GID --groups $SET_GID "$@"
   fi
 else
   # not root
-  init_wrapper "$@"
+  eval exec $(select_init) -- "$@"
 fi
 
