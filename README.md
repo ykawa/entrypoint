@@ -13,7 +13,7 @@ maybe, it can also work on container orchestration.
 ```Dockerfile
 FROM debian:bullseye
 ADD https://raw.githubusercontent.com/oggfogg/entrypoint/main/entrypoint.sh /
-RUN chmod +x /entrypoint.sh
+RUN chmod ug+s a+x /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ etc, etc ]
 ```

@@ -40,4 +40,3 @@ else
   # not root
   eval exec $(select_init) -- "$@"
 fi
-
